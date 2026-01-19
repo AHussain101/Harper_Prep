@@ -1,0 +1,7 @@
+openai
+instructor
+langchain
+chromadb
+PyPDFForm
+streamlit
+python-dotenv

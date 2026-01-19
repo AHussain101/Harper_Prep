@@ -1,0 +1,102 @@
+[
+    {
+      "id": "uw_001",
+      "name": "Melissa Johnson",
+      "carrier": "Liberty Mutual",
+      "region": "Southeast",
+      "appetite": ["Restaurants", "Bars", "Taverns"],
+      "avg_turnaround_hours": 48,
+      "recent_rejections": ["Construction"],
+      "performance_rating": 4.8
+    },
+    {
+      "id": "uw_002",
+      "name": "David Chen",
+      "carrier": "Chubb",
+      "region": "Nationwide",
+      "appetite": ["Tech", "Cyber", "Professional Services"],
+      "avg_turnaround_hours": 24,
+      "recent_rejections": ["Bars", "Nightclubs"],
+      "performance_rating": 4.5
+    },
+    {
+      "id": "uw_003",
+      "name": "Sarah Connor",
+      "carrier": "Travelers",
+      "region": "West Coast",
+      "appetite": ["Retail", "Small Business"],
+      "avg_turnaround_hours": 72,
+      "recent_rejections": [],
+      "performance_rating": 4.2
+    },
+    {
+      "id": "uw_004",
+      "name": "Marcus Thorne",
+      "carrier": "The Hartford",
+      "region": "Southeast",
+      "appetite": ["Bars", "Live Entertainment"],
+      "avg_turnaround_hours": 12,
+      "recent_rejections": ["Manufacturing"],
+      "performance_rating": 4.9
+    },
+    {
+      "id": "uw_005",
+      "name": "Emily Blunt",
+      "carrier": "CNA",
+      "region": "Northeast",
+      "appetite": ["Construction", "Heavy Industry"],
+      "avg_turnaround_hours": 96,
+      "recent_rejections": ["Hospitality"],
+      "performance_rating": 3.9
+    },
+    {
+      "id": "uw_006",
+      "name": "Gary Oldman",
+      "carrier": "Zurich",
+      "region": "Southeast",
+      "appetite": ["Hospitality", "Hotels"],
+      "avg_turnaround_hours": 60,
+      "recent_rejections": ["High Alcohol %"],
+      "performance_rating": 4.0
+    },
+    {
+      "id": "uw_007",
+      "name": "Linda Hamilton",
+      "carrier": "AIG",
+      "region": "Nationwide",
+      "appetite": ["High Net Worth", "Fine Art"],
+      "avg_turnaround_hours": 120,
+      "recent_rejections": ["Small Commercial"],
+      "performance_rating": 4.7
+    },
+    {
+      "id": "uw_008",
+      "name": "Bruce Wayne",
+      "carrier": "Berkshire Hathaway",
+      "region": "Midwest",
+      "appetite": ["Manufacturing", "Auto"],
+      "avg_turnaround_hours": 6,
+      "recent_rejections": ["Restaurants"],
+      "performance_rating": 5.0
+    },
+    {
+      "id": "uw_009",
+      "name": "Diana Prince",
+      "carrier": "Nationwide",
+      "region": "Southeast",
+      "appetite": ["Retail", "Bakeries"],
+      "avg_turnaround_hours": 36,
+      "recent_rejections": ["Liquor Liability"],
+      "performance_rating": 4.3
+    },
+    {
+      "id": "uw_010",
+      "name": "Tony Stark",
+      "carrier": "Stark Insure",
+      "region": "West Coast",
+      "appetite": ["Tech", "R&D"],
+      "avg_turnaround_hours": 1,
+      "recent_rejections": ["Brick and Mortar"],
+      "performance_rating": 4.1
+    }
+  ]
