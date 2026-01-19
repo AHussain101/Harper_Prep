@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computational Broker Engine - Engineering Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a24;
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --border-color: #27272a;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 32px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .header .brand {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .progress-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: calc(50% + 24px);
+            width: calc(100% - 48px);
+            height: 2px;
+            background: var(--border-color);
+        }
+
+        .progress-step.completed:not(:last-child)::after {
+            background: var(--accent-green);
+        }
+
+        .progress-step.active:not(:last-child)::after {
+            background: linear-gradient(90deg, var(--accent-green) 50%, var(--border-color) 50%);
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.completed .step-circle {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .progress-step.active .step-circle {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .step-label {
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-step.active .step-label,
+        .progress-step.completed .step-label {
+            color: var(--text-secondary);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            min-height: 500px;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .panel-header .icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .panel-header .icon.green { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .panel-header .icon.amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+        .panel-header .icon.purple { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); }
+
+        .panel-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .panel-header .tag {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-body {
+            padding: 20px;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        /* Transcript Display */
+        .transcript-line {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            background: var(--bg-tertiary);
+        }
+
+        .transcript-line .speaker {
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .transcript-line .speaker.broker { color: var(--accent-blue); }
+        .transcript-line .speaker.client { color: var(--accent-green); }
+
+        .transcript-line.highlight {
+            border-left: 3px solid var(--accent-amber);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        /* JSON Display */
+        .json-display {
+            font-size: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        .json-key { color: #7dd3fc; }
+        .json-string { color: #86efac; }
+        .json-number { color: #fcd34d; }
+        .json-boolean { color: #c4b5fd; }
+        .json-null { color: var(--text-muted); }
+
+        /* Loading State */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.9);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Explanation Box */
+        .explanation {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .explanation h4 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .explanation h4 .phase-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .phase-1 .phase-tag { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .phase-2 .phase-tag { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .phase-3 .phase-tag { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+        .phase-4 .phase-tag { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); }
+
+        .explanation p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .explanation ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .explanation li {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .explanation li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Underwriter Cards */
+        .underwriter-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .underwriter-card.top {
+            border-color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .underwriter-card .name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .underwriter-card .score {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .underwriter-card .details {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .underwriter-card .badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--accent-green);
+            color: white;
+            margin-left: 8px;
+        }
+
+        /* Summary Card */
+        .summary-section {
+            margin-bottom: 20px;
+        }
+
+        .summary-section h5 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .summary-section .content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        /* Status Timeline */
+        .status-timeline {
+            padding-left: 20px;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .status-item {
+            position: relative;
+            padding: 12px 0 12px 20px;
+        }
+
+        .status-item::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 16px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+        }
+
+        .status-item.completed::before {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .status-item .state {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-item .note {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Form Fields Display */
+        .form-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .form-field:last-child {
+            border-bottom: none;
+        }
+
+        .form-field .label {
+            color: var(--text-muted);
+        }
+
+        .form-field .value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-field .value.null {
+            color: var(--accent-amber);
+            font-style: italic;
+        }
+
+        /* Broker Task */
+        .broker-task {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 16px;
+        }
+
+        .broker-task .title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--accent-amber);
+            margin-bottom: 6px;
+        }
+
+        .broker-task .task {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Computational Broker Engine</h1>
+            <p class="subtitle">Engineering Demo for <span class="brand">Aarfans Brokerage</span></p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-step active" id="step-1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Extraction</div>
+            </div>
+            <div class="progress-step" id="step-2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Form Mapping</div>
+            </div>
+            <div class="progress-step" id="step-3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Routing</div>
+            </div>
+            <div class="progress-step" id="step-4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Execution</div>
+            </div>
+        </div>
+
+        <!-- Explanation Box -->
+        <div class="explanation phase-1" id="explanation">
+            <h4>
+                <span class="phase-tag">Phase 1</span>
+                The Listener — Contextual Extraction
+            </h4>
+            <p>The LLM processes raw discovery call transcripts and extracts structured business data. Key capabilities:</p>
+            <ul>
+                <li><strong>Entity Extraction:</strong> Business name, address, industry classification (NAICS/SIC)</li>
+                <li><strong>Context Differentiation:</strong> Separates historical data (past carriers) from current requirements</li>
+                <li><strong>Aarfans Brokerage Touch:</strong> Captures social availability and personal constraints for white-glove service</li>
+                <li><strong>Risk Factors:</strong> Identifies hazards like live entertainment, alcohol service, cooking equipment</li>
+            </ul>
+        </div>
+
+        <!-- Main Content Panels -->
+        <div class="main-content" id="main-content">
+            <!-- Left Panel: Input -->
+            <div class="panel" id="input-panel">
+                <div class="panel-header">
+                    <div class="icon blue">📝</div>
+                    <h3>Raw Transcript Input</h3>
+                    <span class="tag">Source</span>
+                </div>
+                <div class="panel-body" id="input-content">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Output -->
+            <div class="panel" id="output-panel" style="position: relative;">
+                <div class="panel-header">
+                    <div class="icon green">📊</div>
+                    <h3 id="output-title">Extracted Data</h3>
+                    <span class="tag">Output</span>
+                </div>
+                <div class="panel-body" id="output-content">
+                    <!-- Content injected by JS -->
+                </div>
+                <div class="loading-overlay" id="loading">
+                    <div class="spinner"></div>
+                    <div class="loading-text" id="loading-text">Processing with GPT-4o...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="prev-btn" disabled>
+                ← Previous Phase
+            </button>
+            <button class="btn btn-primary" id="next-btn">
+                Next Phase →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Demo Data
+        const transcript = [
+            { speaker: 'broker', text: 'Hey Bill, good to connect. Thanks for making time. I know things are crazy with the new opening.' },
+            { speaker: 'client', text: "Yeah, hey Sarah. Sorry, it's loud here. We're testing the sound system. Can you hear me?" },
+            { speaker: 'broker', text: 'Loud and clear. So, let\'s get into it. I want to get this quote turned around for "The Rusty Anchor" before the weekend. Are we still using the 123 Harbor Blvd address?' },
+            { speaker: 'client', text: 'No, that was the old office. The actual tavern is at 450 Maple Avenue, in Charleston, South Carolina. Zip is 29401.', highlight: true },
+            { speaker: 'broker', text: 'Got it. 450 Maple. And you\'re fully owning the building or leasing?' },
+            { speaker: 'client', text: 'Leasing. The landlord is a pain, actually.', highlight: true },
+            { speaker: 'broker', text: "Okay, noted. Let's talk revenue. What are you projecting for year one gross sales?" },
+            { speaker: 'client', text: "Conservative estimate? Probably $850,000. My brother thinks we'll hit a million, but let's stick with 850k for the paperwork.", highlight: true },
+            { speaker: 'broker', text: "Smart. And what's the split? How much of that is alcohol vs food?" },
+            { speaker: 'client', text: "It's heavy on the booze. I'd say 70% liquor, 30% food. We're doing high-end cocktails.", highlight: true },
+            { speaker: 'broker', text: 'Any live entertainment? That changes the risk profile significantly.' },
+            { speaker: 'client', text: 'Just a piano player on weekends. No bands, no mosh pits. Oh, and by the way, I used to be with Geico for my personal stuff, but for this business policy, I want something specialized.', highlight: true },
+            { speaker: 'broker', text: 'Understood. We won\'t use a generalist. Last thing—when do you need this bound by?' },
+            { speaker: 'client', text: "ASAP. But listen, don't call me tomorrow morning. I'm taking my daughter to her dentist appointment. I won't be free until after 1:00 PM on Tuesday.", highlight: true },
+        ];
+
+        const extractedData = {
+            business_entity: {
+                legal_name: null,
+                dba: "The Rusty Anchor",
+                address: {
+                    street: "450 Maple Avenue",
+                    city: "Charleston",
+                    state: "South Carolina",
+                    zip_code: "29401"
+                },
+                occupancy_type: "Leasing"
+            },
+            industry_classification: {
+                naics_code: "722410",
+                sic_code: "5813",
+                business_description: "Tavern focusing on high-end cocktails with piano entertainment"
+            },
+            revenue_details: {
+                gross_annual_sales: 850000,
+                alcohol_percentage: 70,
+                food_percentage: 30
+            },
+            risk_factors: {
+                hazards: ["piano player", "high-end cocktails", "alcohol service"],
+                operating_hours: null
+            },
+            insurance_history: {
+                past_carrier: "Geico",
+                past_carrier_context: "personal",
+                current_need: "specialized business policy"
+            },
+            social_context_aarfans_brokerage_touch: {
+                availability_notes: "Unavailable until 1:00 PM Tuesday",
+                preferred_contact_time: "Tuesday afternoon",
+                personal_constraints: "daughter's dentist appointment",
+                contact_restrictions: "Don't call tomorrow morning"
+            }
+        };
+
+        const accordForms = {
+            accord_125: {
+                form_name: "Commercial Insurance Application",
+                applicant_name: null,
+                dba: "The Rusty Anchor",
+                mailing_address: "450 Maple Avenue",
+                city: "Charleston",
+                state: "South Carolina",
+                zip: "29401",
+                occupancy: "Tenant",
+                naics_code: "722410",
+                sic_code: "5813",
+                annual_gross_sales: "$850,000",
+                prior_carrier: "Geico (personal)"
+            },
+            accord_126: {
+                form_name: "Commercial General Liability",
+                liquor_liability_required: true,
+                alcohol_sales_pct: "70%",
+                food_sales_pct: "30%",
+                annual_liquor_receipts: "$595,000",
+                live_entertainment: true,
+                entertainment_desc: "Piano player on weekends"
+            },
+            broker_tasks: [
+                "Obtain legal business name from client"
+            ],
+            mapping_summary: {
+                accord_125_completion: "50%",
+                accord_126_completion: "42%",
+                write_once_populate_many: "Address → Mailing + Premises"
+            }
+        };
+
+        const routingData = {
+            risk_profile: {
+                naics_code: "722410",
+                region: "Southeast",
+                business_type: "bar",
+                hazards: ["live entertainment", "alcohol service"],
+                liquor_liability: true
+            },
+            recommendations: [
+                {
+                    rank: 1,
+                    name: "Kevin O'Brien",
+                    score: 52.1,
+                    region: "Southeast",
+                    specialty: "Bars & Restaurants",
+                    turnaround: "2 days",
+                    acceptance_rate: "87%",
+                    top: true
+                },
+                {
+                    rank: 2,
+                    name: "Sarah Mitchell",
+                    score: 42.1,
+                    region: "Southeast",
+                    specialty: "Hospitality",
+                    turnaround: "2.5 days",
+                    acceptance_rate: "82%"
+                },
+                {
+                    rank: 3,
+                    name: "Robert Garcia",
+                    score: 37.6,
+                    region: "Southwest",
+                    specialty: "Bars & Entertainment",
+                    turnaround: "3.5 days",
+                    acceptance_rate: "76%"
+                }
+            ],
+            scoring_breakdown: {
+                region_match: "25 pts",
+                naics_specialty: "30 pts",
+                risk_appetite: "20 pts",
+                turnaround_speed: "15 pts max",
+                acceptance_rate: "10 pts max"
+            }
+        };
+
+        const executionData = {
+            submission_id: "SUB-2024-001",
+            status: "SCHEDULED",
+            scheduled_time: "Tuesday, Jan 21 at 1:30 PM",
+            constraint_respected: "Client unavailable until 1:00 PM Tuesday",
+            state_history: [
+                { state: "RECEIVED", note: "Submission received" },
+                { state: "EXTRACTED", note: "Phase 1 complete" },
+                { state: "MAPPED", note: "Phase 2 complete" },
+                { state: "ROUTED", note: "Phase 3 complete" },
+                { state: "SCHEDULED", note: "Email scheduled for Tuesday 1:30 PM" }
+            ],
+            executive_summary: {
+                headline: "The Rusty Anchor → Kevin O'Brien",
+                business: "Bar/tavern in Charleston, SC. $850K revenue, 70% alcohol. Piano entertainment. Liquor liability required.",
+                routing: "Kevin O'Brien selected. NAICS 722410 specialist. 2-day turnaround, 87% acceptance rate.",
+                next_action: "Email scheduled for Tuesday, Jan 21 at 1:30 PM",
+                aarfans_brokerage_touch: "Client (Bill) has daughter's dentist Tuesday morning. Prefers afternoon contact."
+            }
+        };
+
+        // State
+        let currentPhase = 1;
+
+        // DOM Elements
+        const steps = [1, 2, 3, 4].map(i => document.getElementById(`step-${i}`));
+        const explanation = document.getElementById('explanation');
+        const inputPanel = document.getElementById('input-panel');
+        const inputContent = document.getElementById('input-content');
+        const outputPanel = document.getElementById('output-panel');
+        const outputContent = document.getElementById('output-content');
+        const outputTitle = document.getElementById('output-title');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loading-text');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // Utility: Render JSON with syntax highlighting
+        function renderJson(obj, indent = 0) {
+            const spaces = '  '.repeat(indent);
+            let html = '';
+
+            if (Array.isArray(obj)) {
+                html += '[\n';
+                obj.forEach((item, i) => {
+                    html += spaces + '  ' + renderJson(item, indent + 1);
+                    if (i < obj.length - 1) html += ',';
+                    html += '\n';
+                });
+                html += spaces + ']';
+            } else if (typeof obj === 'object' && obj !== null) {
+                html += '{\n';
+                const keys = Object.keys(obj);
+                keys.forEach((key, i) => {
+                    html += spaces + '  <span class="json-key">"' + key + '"</span>: ';
+                    html += renderJson(obj[key], indent + 1);
+                    if (i < keys.length - 1) html += ',';
+                    html += '\n';
+                });
+                html += spaces + '}';
+            } else if (typeof obj === 'string') {
+                html += '<span class="json-string">"' + obj + '"</span>';
+            } else if (typeof obj === 'number') {
+                html += '<span class="json-number">' + obj + '</span>';
+            } else if (typeof obj === 'boolean') {
+                html += '<span class="json-boolean">' + obj + '</span>';
+            } else if (obj === null) {
+                html += '<span class="json-null">null</span>';
+            }
+
+            return html;
+        }
+
+        // Render transcript
+        function renderTranscript() {
+            let html = '';
+            transcript.forEach(line => {
+                const highlightClass = line.highlight ? ' highlight' : '';
+                const speakerLabel = line.speaker === 'broker' ? 'BROKER' : 'CLIENT';
+                html += `<div class="transcript-line${highlightClass}">
+                    <span class="speaker ${line.speaker}">${speakerLabel}:</span>
+                    ${line.text}
+                </div>`;
+            });
+            return html;
+        }
+
+        // Phase renderers
+        function renderPhase1() {
+            explanation.className = 'explanation phase-1';
+            explanation.innerHTML = `
+                <h4>
+                    <span class="phase-tag">Phase 1</span>
+                    The Listener — Contextual Extraction
+                </h4>
+                <p>The LLM processes raw discovery call transcripts and extracts structured business data. Key capabilities:</p>
+                <ul>
+                    <li><strong>Entity Extraction:</strong> Business name, address, industry classification (NAICS/SIC)</li>
+                    <li><strong>Context Differentiation:</strong> Separates historical data (past carriers) from current requirements</li>
+                    <li><strong>Aarfans Brokerage Touch:</strong> Captures social availability and personal constraints for white-glove service</li>
+                    <li><strong>Risk Factors:</strong> Identifies hazards like live entertainment, alcohol service, cooking equipment</li>
+                </ul>
+            `;
+
+            inputPanel.querySelector('.panel-header').innerHTML = `
+                <div class="icon blue">📝</div>
+                <h3>Raw Transcript Input</h3>
+                <span class="tag">Source</span>
+            `;
+            inputContent.innerHTML = renderTranscript();
+
+            outputTitle.textContent = 'Extracted Data';
+            outputPanel.querySelector('.icon').className = 'icon green';
+            outputContent.innerHTML = `<pre class="json-display">${renderJson(extractedData)}</pre>`;
+        }
+
+        function renderPhase2() {
+            explanation.className = 'explanation phase-2';
+            explanation.innerHTML = `
+                <h4>
+                    <span class="phase-tag">Phase 2</span>
+                    The Architect — Structured Form Mapping
+                </h4>
+                <p>Maps extracted data to industry-standard ACORD 125/126 form schemas. Key features:</p>
+                <ul>
+                    <li><strong>Write Once, Populate Many:</strong> Address extracted once populates all relevant form sections</li>
+                    <li><strong>No Hallucination:</strong> Missing fields stay null and become Broker Tasks for follow-up</li>
+                    <li><strong>Schema Compliance:</strong> Output mirrors actual ACORD form field structure</li>
+                    <li><strong>Completion Tracking:</strong> Reports percentage of fields populated vs. missing</li>
+                </ul>
+            `;
+
+            inputPanel.querySelector('.panel-header').innerHTML = `
+                <div class="icon green">📊</div>
+                <h3>Phase 1 Output</h3>
+                <span class="tag">Input</span>
+            `;
+            inputContent.innerHTML = `<pre class="json-display">${renderJson(extractedData)}</pre>`;
+
+            outputTitle.textContent = 'ACORD Form Mapping';
+            outputPanel.querySelector('.icon').className = 'icon green';
+
+            let formHtml = `
+                <h4 style="font-size: 13px; margin-bottom: 12px; color: var(--accent-blue);">ACORD 125 - Commercial Insurance Application</h4>
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+            `;
+
+            Object.entries(accordForms.accord_125).forEach(([key, value]) => {
+                if (key === 'form_name') return;
+                const isNull = value === null;
+                formHtml += `<div class="form-field">
+                    <span class="label">${key.replace(/_/g, ' ')}</span>
+                    <span class="value${isNull ? ' null' : ''}">${isNull ? 'NULL → Broker Task' : value}</span>
+                </div>`;
+            });
+
+            formHtml += `</div>
+                <h4 style="font-size: 13px; margin-bottom: 12px; color: var(--accent-green);">ACORD 126 - Commercial General Liability</h4>
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+            `;
+
+            Object.entries(accordForms.accord_126).forEach(([key, value]) => {
+                if (key === 'form_name') return;
+                formHtml += `<div class="form-field">
+                    <span class="label">${key.replace(/_/g, ' ')}</span>
+                    <span class="value">${value}</span>
+                </div>`;
+            });
+
+            formHtml += `</div>
+                <div class="broker-task">
+                    <div class="title">⚠️ Broker Task Required</div>
+                    <div class="task">${accordForms.broker_tasks[0]}</div>
+                </div>
+            `;
+
+            outputContent.innerHTML = formHtml;
+        }
+
+        function renderPhase3() {
+            explanation.className = 'explanation phase-3';
+            explanation.innerHTML = `
+                <h4>
+                    <span class="phase-tag">Phase 3</span>
+                    The Strategist — Intelligent Routing
+                </h4>
+                <p>Matches the extracted risk profile against an underwriter database to find the optimal match. Scoring criteria:</p>
+                <ul>
+                    <li><strong>Region Match (25 pts):</strong> Southeast underwriter for SC business</li>
+                    <li><strong>NAICS Specialty (30 pts):</strong> Underwriter specializes in bars (722410)</li>
+                    <li><strong>Risk Appetite (20 pts):</strong> Underwriter likes hospitality, accepts entertainment risks</li>
+                    <li><strong>Turnaround & Acceptance:</strong> Faster response and higher acceptance rates score higher</li>
+                </ul>
+            `;
+
+            inputPanel.querySelector('.panel-header').innerHTML = `
+                <div class="icon amber">🎯</div>
+                <h3>Risk Profile</h3>
+                <span class="tag">Input</span>
+            `;
+            inputContent.innerHTML = `<pre class="json-display">${renderJson(routingData.risk_profile)}</pre>
+                <h4 style="font-size: 13px; margin: 20px 0 12px; color: var(--text-secondary);">Scoring Weights</h4>
+                <pre class="json-display">${renderJson(routingData.scoring_breakdown)}</pre>
+            `;
+
+            outputTitle.textContent = 'Underwriter Recommendations';
+            outputPanel.querySelector('.icon').className = 'icon amber';
+
+            let html = '';
+            routingData.recommendations.forEach(uw => {
+                html += `<div class="underwriter-card${uw.top ? ' top' : ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div class="name">#${uw.rank} ${uw.name}${uw.top ? '<span class="badge">TOP MATCH</span>' : ''}</div>
+                            <div class="details">${uw.region} · ${uw.specialty}</div>
+                        </div>
+                        <div class="score">${uw.score}</div>
+                    </div>
+                    <div class="details" style="margin-top: 12px;">
+                        Turnaround: ${uw.turnaround} · Acceptance: ${uw.acceptance_rate}
+                    </div>
+                </div>`;
+            });
+
+            outputContent.innerHTML = html;
+        }
+
+        function renderPhase4() {
+            explanation.className = 'explanation phase-4';
+            explanation.innerHTML = `
+                <h4>
+                    <span class="phase-tag">Phase 4</span>
+                    The Closer — Execution & Scheduling
+                </h4>
+                <p>Manages submission state and schedules actions based on the Aarfans Brokerage Touch (social context). Features:</p>
+                <ul>
+                    <li><strong>Temporal Logic:</strong> Respects "don't call tomorrow morning" → schedules for Tuesday afternoon</li>
+                    <li><strong>State Management:</strong> Tracks submission through: Received → Extracted → Mapped → Routed → Scheduled</li>
+                    <li><strong>Executive Summary:</strong> Generates "Speed of Thought" update for broker review</li>
+                    <li><strong>White-Glove Service:</strong> Captures personal constraints for human-centered timing</li>
+                </ul>
+            `;
+
+            inputPanel.querySelector('.panel-header').innerHTML = `
+                <div class="icon purple">📋</div>
+                <h3>Submission Status</h3>
+                <span class="tag">State</span>
+            `;
+
+            let statusHtml = `
+                <div style="margin-bottom: 20px;">
+                    <div class="form-field">
+                        <span class="label">Submission ID</span>
+                        <span class="value">${executionData.submission_id}</span>
+                    </div>
+                    <div class="form-field">
+                        <span class="label">Current Status</span>
+                        <span class="value" style="color: var(--accent-green);">${executionData.status}</span>
+                    </div>
+                    <div class="form-field">
+                        <span class="label">Scheduled Time</span>
+                        <span class="value">${executionData.scheduled_time}</span>
+                    </div>
+                    <div class="form-field">
+                        <span class="label">Constraint Respected</span>
+                        <span class="value" style="color: var(--accent-amber);">${executionData.constraint_respected}</span>
+                    </div>
+                </div>
+                <h4 style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">State History</h4>
+                <div class="status-timeline">
+            `;
+
+            executionData.state_history.forEach(item => {
+                statusHtml += `<div class="status-item completed">
+                    <div class="state">${item.state}</div>
+                    <div class="note">${item.note}</div>
+                </div>`;
+            });
+
+            statusHtml += '</div>';
+            inputContent.innerHTML = statusHtml;
+
+            outputTitle.textContent = 'Executive Summary';
+            outputPanel.querySelector('.icon').className = 'icon purple';
+
+            const summary = executionData.executive_summary;
+            outputContent.innerHTML = `
+                <div class="summary-section">
+                    <h5>Headline</h5>
+                    <div class="content" style="font-weight: 600; font-size: 14px;">${summary.headline}</div>
+                </div>
+                <div class="summary-section">
+                    <h5>Business</h5>
+                    <div class="content">${summary.business}</div>
+                </div>
+                <div class="summary-section">
+                    <h5>Routing Decision</h5>
+                    <div class="content">${summary.routing}</div>
+                </div>
+                <div class="summary-section">
+                    <h5>Next Action</h5>
+                    <div class="content" style="color: var(--accent-green);">${summary.next_action}</div>
+                </div>
+                <div class="summary-section">
+                    <h5>Aarfans Brokerage Touch</h5>
+                    <div class="content" style="color: var(--accent-amber);">${summary.aarfans_brokerage_touch}</div>
+                </div>
+            `;
+        }
+
+        // Update UI for current phase
+        function updateUI() {
+            // Update progress steps
+            steps.forEach((step, i) => {
+                step.classList.remove('active', 'completed');
+                if (i + 1 < currentPhase) {
+                    step.classList.add('completed');
+                } else if (i + 1 === currentPhase) {
+                    step.classList.add('active');
+                }
+            });
+
+            // Update buttons
+            prevBtn.disabled = currentPhase === 1;
+            nextBtn.textContent = currentPhase === 4 ? 'Restart Demo →' : 'Next Phase →';
+
+            // Render phase content
+            switch (currentPhase) {
+                case 1: renderPhase1(); break;
+                case 2: renderPhase2(); break;
+                case 3: renderPhase3(); break;
+                case 4: renderPhase4(); break;
+            }
+        }
+
+        // Show loading state
+        function showLoading(text, duration) {
+            return new Promise(resolve => {
+                loadingText.textContent = text;
+                loading.classList.add('active');
+                setTimeout(() => {
+                    loading.classList.remove('active');
+                    resolve();
+                }, duration);
+            });
+        }
+
+        // Event handlers
+        nextBtn.addEventListener('click', async () => {
+            if (currentPhase === 4) {
+                currentPhase = 1;
+                updateUI();
+                return;
+            }
+
+            const loadingMessages = [
+                'Processing with GPT-4o + Instructor...',
+                'Mapping to ACORD schemas...',
+                'Scoring underwriters...',
+                'Scheduling with temporal logic...'
+            ];
+
+            await showLoading(loadingMessages[currentPhase - 1], 1200);
+            currentPhase++;
+            updateUI();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPhase > 1) {
+                currentPhase--;
+                updateUI();
+            }
+        });
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+</html>
